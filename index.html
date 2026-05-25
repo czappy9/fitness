@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="FitDay">
+  <meta name="theme-color" content="#F7F5F0">
+  <title>FitDay</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #F7F5F0;
+      --card: #ffffff;
+      --border: #EEECE7;
+      --text-primary: #1a1a18;
+      --text-secondary: #888;
+      --text-tertiary: #BBB;
+      --accent-strength: #2B6CB0;
+      --accent-zone2: #276749;
+      --accent-vo2: #C53030;
+      --accent-rest: #4A5568;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      max-width: 430px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* ── Auth ── */
+    #auth {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 32px;
+      gap: 0;
+    }
+
+    .auth-logo {
+      width: 72px; height: 72px;
+      background: #1a1a18;
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+      margin-bottom: 24px;
+    }
+
+    .auth-title { font-size: 28px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 6px; }
+    .auth-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 40px; text-align: center; line-height: 1.5; }
+
+    #auth-email {
+      width: 100%; padding: 14px 16px;
+      border: 1.5px solid var(--border); border-radius: 14px;
+      font-size: 15px; font-family: inherit;
+      background: var(--card); margin-bottom: 10px;
+      outline: none;
+    }
+    #auth-email:focus { border-color: var(--text-primary); }
+
+    #auth-btn {
+      width: 100%; padding: 14px;
+      background: var(--text-primary); color: #fff;
+      border: none; border-radius: 14px;
+      font-size: 14px; font-weight: 800; font-family: inherit;
+      cursor: pointer;
+    }
+
+    /* ── App shell ── */
+    #app {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── Views ── */
+    .view {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: calc(64px + var(--safe-bottom));
+      scrollbar-width: none;
+    }
+    .view::-webkit-scrollbar { display: none; }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      height: calc(56px + var(--safe-bottom));
+      background: rgba(247, 245, 240, .94);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(0,0,0,.07);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      padding-top: 10px;
+      z-index: 50;
+    }
+
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 2px; cursor: pointer; padding: 0 4px;
+    }
+    .nav-icon { font-size: 20px; line-height: 1; }
+    .nav-label { font-size: 9px; font-weight: 700; color: var(--text-tertiary); letter-spacing: .02em; }
+    .nav-item.active .nav-label { color: var(--text-primary); }
+
+    /* ── App header ── */
+    .app-header { padding: 56px 20px 14px; }
+    .greeting { font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 2px; }
+    .day-title { font-size: 26px; font-weight: 800; letter-spacing: -.5px; }
+    .date-badge { font-size: 11px; font-weight: 600; color: var(--text-secondary); background: var(--border); padding: 3px 10px; border-radius: 20px; }
+
+    /* ── Workout card ── */
+    .workout-card {
+      margin: 0 16px 14px;
+      border-radius: 22px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .wc-bg-shape {
+      position: absolute; top: -30px; right: -30px;
+      width: 130px; height: 130px;
+      border-radius: 50%; background: #fff; opacity: .08;
+      pointer-events: none;
+    }
+    .wc-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 20px;
+      background: rgba(255,255,255,.18); color: #fff;
+      margin-bottom: 8px;
+    }
+    .wc-title { font-size: 22px; font-weight: 800; letter-spacing: -.4px; color: #fff; margin-bottom: 3px; }
+    .wc-sub { font-size: 12px; color: rgba(255,255,255,.65); margin-bottom: 12px; }
+    .wc-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+    .wc-chip {
+      font-size: 10px; font-weight: 600; padding: 3px 9px;
+      border-radius: 20px; border: 1px solid rgba(255,255,255,.25);
+      color: rgba(255,255,255,.85);
+    }
+    .start-btn {
+      font-size: 12px; font-weight: 800;
+      padding: 8px 16px; border-radius: 20px; border: none;
+      cursor: pointer; background: #fff; font-family: inherit;
+    }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+      color: var(--text-tertiary); padding: 0 20px; margin-bottom: 8px;
+    }
+
+    /* ── Recovery chips ── */
+    .rec-scroll {
+      display: flex; gap: 8px; padding: 0 16px;
+      overflow-x: auto; margin-bottom: 14px; scrollbar-width: none;
+    }
+    .rec-scroll::-webkit-scrollbar { display: none; }
+    .rec-chip {
+      flex-shrink: 0; background: var(--card); border-radius: 14px;
+      padding: 10px 12px; display: flex; flex-direction: column; gap: 3px;
+      width: 84px; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .rec-icon { font-size: 18px; }
+    .rec-name { font-size: 10px; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .rec-when { font-size: 9px; font-weight: 500; color: var(--text-tertiary); }
+
+    /* ── Zone 2 bar ── */
+    .z2-bar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .z2-bar-title { font-size: 12px; font-weight: 700; }
+    .z2-bar-val { font-size: 12px; font-weight: 700; color: var(--accent-zone2); }
+    .z2-track { background: #F0EDE8; border-radius: 6px; height: 7px; overflow: hidden; margin-bottom: 6px; }
+    .z2-fill { height: 7px; border-radius: 6px; background: linear-gradient(90deg, #276749, #38A169); }
+    .z2-dots { display: flex; justify-content: space-between; }
+    .z2d { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .z2d-name { font-size: 9px; font-weight: 600; color: var(--text-tertiary); }
+    .z2d-dot { width: 6px; height: 6px; border-radius: 50%; background: #E8E5E0; }
+    .z2d-dot.done { background: #38A169; }
+    .z2d-dot.today { background: #276749; box-shadow: 0 0 0 2px #C6F6D5; }
+
+    /* ── Week strip ── */
+    .week-strip { display: flex; justify-content: space-between; }
+    .ws-day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .ws-name { font-size: 9px; font-weight: 600; color: var(--text-tertiary); }
+    .ws-bubble { width: 28px; height: 28px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+
+    /* ── Generic card ── */
+    .card { background: var(--card); border-radius: 18px; box-shadow: 0 1px 4px rgba(0,0,0,.06); padding: 14px 16px; }
+
+    /* ── Exercise block ── */
+    .exercise-block { padding: 14px 0; }
+    .exercise-block + .exercise-block { border-top: 1px solid var(--border); }
+
+    /* ── Sheet ── */
+    #sheet-overlay {
+      display: none; position: fixed;
+      inset: 0; background: rgba(0,0,0,.3);
+      z-index: 90; border-radius: 0;
+    }
+    #sheet {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
+      width: 100%; max-width: 430px;
+      background: var(--card);
+      border-radius: 22px 22px 0 0;
+      max-height: 88vh;
+      overflow-y: auto;
+      z-index: 100;
+      transition: transform .35s cubic-bezier(.32,1,.23,1);
+      padding-bottom: var(--safe-bottom);
+    }
+    #sheet.open { transform: translateX(-50%) translateY(0); }
+    .sheet-handle {
+      width: 36px; height: 4px; background: var(--border);
+      border-radius: 2px; margin: 14px auto 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Auth Screen ── -->
+<div id="auth">
+  <div class="auth-logo">💪</div>
+  <h1 class="auth-title">FitDay</h1>
+  <p class="auth-sub">Your daily workout and recovery plan. Enter your email to get a magic link.</p>
+  <div id="auth-form" style="width:100%">
+    <input id="auth-email" type="email" placeholder="your@email.com" autocomplete="email">
+    <button id="auth-btn" onclick="handleAuth()">Send magic link →</button>
+  </div>
+</div>
+
+<!-- ── App Shell ── -->
+<div id="app">
+
+  <!-- Views -->
+  <div id="view-today"   class="view"></div>
+  <div id="view-week"    class="view"></div>
+  <div id="view-progress" class="view"></div>
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" data-view="today"    onclick="navigate('today')">
+      <span class="nav-icon">⊙</span>
+      <span class="nav-label">Today</span>
+    </div>
+    <div class="nav-item" data-view="week"     onclick="navigate('week')">
+      <span class="nav-icon">◫</span>
+      <span class="nav-label">Week</span>
+    </div>
+    <div class="nav-item" data-view="progress" onclick="navigate('progress')">
+      <span class="nav-icon">↗</span>
+      <span class="nav-label">Progress</span>
+    </div>
+  </nav>
+
+  <!-- Bottom sheet (workout detail, zone2 log, etc.) -->
+  <div id="sheet-overlay" onclick="closeSheet()"></div>
+  <div id="sheet">
+    <div class="sheet-handle"></div>
+    <div id="sheet-content"></div>
+  </div>
+
+</div>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>
