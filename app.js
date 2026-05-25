@@ -64,7 +64,7 @@ window.handleAuth = async function () {
   btn.disabled = true;
   const { error } = await sb.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.origin },
+    options: { emailRedirectTo: 'https://czappy9.github.io/fitness/' },
   });
   if (error) { btn.textContent = 'Try again'; btn.disabled = false; return; }
   document.getElementById('auth-form').innerHTML =
