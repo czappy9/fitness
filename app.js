@@ -4,7 +4,7 @@ import { WORKOUTS, getWeekSchedule, getTodayWorkout, getPhase } from './workouts
 import { isConnected as hkConnected, getDailyHealthSnapshot, computeRecoveryScore } from './healthkit.js';
 
 // ─── Config (fill in your Supabase details) ──────────────────
-const SUPABASE_URL  = 'https://abcdefghijklmnop.supabase.co'; 
+const SUPABASE_URL  = 'https://savykhwgglgyitxurwhr.supabase.co'; 
 const SUPABASE_ANON = 'sb_publishable_i7Mk1FVF2IdAp9sBQVS4fQ_Ctof5s4e';
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
