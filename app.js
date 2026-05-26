@@ -29,6 +29,13 @@ async function boot() {
     navigator.serviceWorker.register('/sw.js').catch(console.warn);
   }
 
+async function boot() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(console.warn);
+  }
+
+  await sb.auth.initialize();
+  
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
     state.user = session.user;
@@ -38,8 +45,12 @@ async function boot() {
     showAuth();
   }
 
-  sb.auth.onAuthStateChange((_event, session) => {
-    if (session?.user) { state.user = session.user; showApp(); }
+  sb.auth.onAuthStateChange(async (_event, session) => {
+    if (session?.user) { 
+      state.user = session.user; 
+      await loadSettings();
+      showApp(); 
+    }
     else { showAuth(); }
   });
 }
