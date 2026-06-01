@@ -67,17 +67,34 @@ window.handleAuth = async function () {
   const email = document.getElementById('auth-email').value.trim();
   if (!email) return;
   const btn = document.getElementById('auth-btn');
-  btn.textContent = 'Sending link…';
+  btn.textContent = 'Sending code…';
   btn.disabled = true;
   const { error } = await sb.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: 'https://czappy9.github.io/fitness/' },
+    options: { shouldCreateUser: true },
   });
   if (error) { btn.textContent = 'Try again'; btn.disabled = false; return; }
-  document.getElementById('auth-form').innerHTML =
-    `<p style="text-align:center;color:#276749;font-weight:600;padding:20px 0">
-      ✓ Check your email for a magic link!
-    </p>`;
+  document.getElementById('auth-form').innerHTML = `
+    <p style="text-align:center;color:#276749;font-weight:600;padding:10px 0 16px">
+      ✓ Check your email for a 6-digit code
+    </p>
+    <input id="auth-otp" type="number" placeholder="123456"
+      style="width:100%;padding:14px 16px;border:1.5px solid #E0DDD8;border-radius:14px;font-size:24px;font-family:inherit;letter-spacing:.2em;text-align:center;margin-bottom:10px;outline:none">
+    <button onclick="verifyCode('${email}')" id="verify-btn"
+      style="width:100%;padding:14px;background:#1a1a18;color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">
+      Verify code →
+    </button>
+  `;
+};
+
+window.verifyCode = async function (email) {
+  const token = document.getElementById('auth-otp')?.value?.trim();
+  if (!token || token.length < 6) return;
+  const btn = document.getElementById('verify-btn');
+  btn.textContent = 'Verifying…';
+  btn.disabled = true;
+  const { error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
+  if (error) { btn.textContent = 'Invalid code — try again'; btn.disabled = false; return; }
 };
 
 // ─── Settings ────────────────────────────────────────────────
