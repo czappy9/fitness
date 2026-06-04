@@ -263,6 +263,30 @@ window.openWorkoutDetail = async function () {
   const workout = WORKOUTS[workoutType];
   if (!workout?.exercises && workoutType !== 'vo2') return;
 
+  if (workoutType === 'vo2') {
+    document.getElementById('sheet-content').innerHTML = `
+      <div style="padding:0 18px 20px">
+        <p style="font-size:16px;font-weight:800;margin-bottom:4px">${workout.subtitle}</p>
+        <p style="font-size:11px;color:#888;margin-bottom:16px">${workout.duration} · Norwegian 4×4 protocol</p>
+        ${workout.protocol.map(p => `
+          <div style="background:${p.intensity==='hard'?'#FCEBEB':'#F7F5F0'};border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;">
+            <div style="min-width:52px;">
+              <p style="font-size:18px;font-weight:800;color:${p.intensity==='hard'?'#C53030':'#1a1a18'}">${p.mins}m</p>
+              <p style="font-size:10px;color:#888;font-weight:600">${p.phase}</p>
+            </div>
+            <p style="font-size:12px;color:#555;line-height:1.6;margin-top:2px">${p.detail}</p>
+          </div>
+        `).join('')}
+        <p style="font-size:11px;color:#AAA;margin:12px 0;">Activities: ${workout.activities.join(' · ')}</p>
+        <button onclick="markVO2Complete()" style="width:100%;margin-top:8px;padding:14px;background:#C53030;color:#fff;border:none;border-radius:14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">
+          ✓ Mark session complete
+        </button>
+      </div>
+    `;
+    openSheet();
+    return;
+  }
+
   const todayStr = new Date().toISOString().split('T')[0];
   const { data: existingLogs } = await sb.from('exercise_logs')
     .select('*').eq('user_id', state.user.id).eq('date', todayStr);
@@ -323,6 +347,14 @@ window.openWorkoutDetail = async function () {
     </div>
   `;
   openSheet();
+};
+
+window.markVO2Complete = async function () {
+  const session = await ensureSession();
+  await sb.from('workout_sessions').update({ completed: true }).eq('id', session.id);
+  state.today.session = { ...session, completed: true };
+  closeSheet();
+  renderToday();
 };
 
 const pendingLogs = {};
