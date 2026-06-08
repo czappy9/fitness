@@ -170,7 +170,7 @@ export const WORKOUTS = {
       { id:'row',   icon:'🚣', name:'Row',   minMins:20, idealMins:35,
         note:'Full body — HR reaches Zone 2 quickly.' },
       { id:'golf', icon:'⛳', name:'Golf', minMins:60, idealMins:90,
-  note:'Walking 18 holes = 4–5 miles of Zone 2. Ride a cart and it doesn\'t count.' },
+        note:'Walking 18 holes = 4–5 miles of Zone 2. Ride a cart and it doesn\'t count.' },
     ],
     recovery: [
       { icon:'🤸', name:'Light stretch', timing:'Post-workout', detail:'5–10 min. Calves, hamstrings, hip flexors.' },
