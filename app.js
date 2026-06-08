@@ -413,7 +413,7 @@ let z2Selection = { activityId: 'run', durationMins: 45 };
 
 window.openZ2Sheet = function () {
   const activities = WORKOUTS.zone2.activities;
-  const durations = [20, 30, 45, 60, 75, 90];
+  const durations = [20, 30, 45, 60, 75, 90, 120, 180, 240];
   document.getElementById('sheet-content').innerHTML = `
     <div style="padding:0 18px 20px">
       <p style="font-size:16px;font-weight:800;margin-bottom:4px">Log Zone 2 session</p>
@@ -432,7 +432,7 @@ window.openZ2Sheet = function () {
         ${durations.map(d => `
           <div onclick="selectDuration(${d})" id="dur-${d}"
             style="font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;cursor:pointer;border:1.5px solid ${z2Selection.durationMins===d?'#276749':'#E0DDD8'};background:${z2Selection.durationMins===d?'#EAF3DE':'#F7F5F0'};color:${z2Selection.durationMins===d?'#276749':'#666'}">
-            ${d} min
+            ${d >= 60 ? (d % 60 === 0 ? d/60+' hr' : Math.floor(d/60)+'h '+d%60+'m') : d+' min'}
           </div>`).join('')}
       </div>
       <button onclick="saveZ2Session()" style="width:100%;padding:14px;background:#276749;color:#fff;border:none;border-radius:14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">
@@ -633,7 +633,7 @@ window.viewDayDetail = async function (dateStr) {
 
 window.openBackfillZ2 = function (dateStr) {
   const activities = WORKOUTS.zone2.activities;
-  const durations = [20, 30, 45, 60, 75, 90];
+  const durations = [20, 30, 45, 60, 75, 90, 120, 180, 240];
   document.getElementById('sheet-content').innerHTML = `
     <div style="padding:0 18px 20px">
       <p style="font-size:16px;font-weight:800;margin-bottom:4px">Log Zone 2 — ${dateStr.slice(5).replace('-','/')}</p>
@@ -652,7 +652,7 @@ window.openBackfillZ2 = function (dateStr) {
         ${durations.map(d => `
           <div onclick="selectBfDuration(${d})" id="bf-dur-${d}"
             style="font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;cursor:pointer;border:1.5px solid ${d===45?'#276749':'#E0DDD8'};background:${d===45?'#EAF3DE':'#F7F5F0'};color:${d===45?'#276749':'#666'}">
-            ${d} min
+            ${d >= 60 ? (d % 60 === 0 ? d/60+' hr' : Math.floor(d/60)+'h '+d%60+'m') : d+' min'}
           </div>`).join('')}
       </div>
       <button onclick="saveBackfillZ2('${dateStr}')" 
