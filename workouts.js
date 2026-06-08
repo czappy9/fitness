@@ -220,7 +220,7 @@ export function getWeekSchedule(referenceDate = new Date()) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
     return {
-      date: d.toISOString().split('T')[0],
+      date: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
       dayName: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i],
       workoutType: SCHEDULE[d.getDay()],
       isToday: d.toDateString() === referenceDate.toDateString(),
