@@ -546,9 +546,187 @@ async function renderWeek() {
   `;
 }
 
-window.viewDayDetail = function (dateStr) {
+window.viewDayDetail = async function (dateStr) {
   const todayStr = new Date().toISOString().split('T')[0];
-  if (dateStr === todayStr) navigate('today');
+  if (dateStr === todayStr) { navigate('today'); return; }
+
+  const workoutType = getWorkoutForDate(dateStr);
+  const workout = WORKOUTS[workoutType];
+  const isPast = dateStr < todayStr;
+
+  const { data: session } = await sb.from('workout_sessions')
+    .select('*').eq('user_id', state.user.id).eq('date', dateStr).maybeSingle();
+  const { data: z2 } = await sb.from('zone2_logs')
+    .select('*').eq('user_id', state.user.id).eq('date', dateStr).maybeSingle();
+  const { data: exLogs } = await sb.from('exercise_logs')
+    .select('*').eq('user_id', state.user.id).eq('date', dateStr);
+
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const d = new Date(dateStr + 'T12:00:00');
+  const dayLabel = `${dayNames[d.getDay()]} ${dateStr.slice(5).replace('-','/')}`;
+
+  let content = `
+    <div style="padding:0 18px 20px">
+      <p style="font-size:16px;font-weight:800;margin-bottom:2px">${dayLabel}</p>
+      <p style="font-size:12px;color:#888;margin-bottom:16px">${workout.label}${session?.completed ? ' · <span style="color:#276749">✓ Completed</span>' : ''}</p>
+  `;
+
+  if (workoutType === 'zone2' || workoutType === 'sport') {
+    if (z2) {
+      content += `
+        <div style="background:#EAF3DE;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+          <p style="font-size:13px;font-weight:700;color:#276749;margin-bottom:4px">Zone 2 logged</p>
+          <p style="font-size:14px;font-weight:800">${z2.duration_minutes} min · ${z2.activity}</p>
+        </div>`;
+    } else if (isPast) {
+      content += `
+        <p style="font-size:12px;color:#888;margin-bottom:12px">Nothing logged for this day. Want to add it now?</p>`;
+    }
+    if (isPast) {
+      content += `
+        <button onclick="openBackfillZ2('${dateStr}')" 
+          style="width:100%;padding:13px;background:${z2?'#F7F5F0':'#276749'};color:${z2?'#555':'#fff'};border:${z2?'1.5px solid #E0DDD8':'none'};border-radius:14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">
+          ${z2 ? 'Edit log' : 'Log this session →'}
+        </button>`;
+    }
+  } else if (workoutType.startsWith('strength')) {
+    if (exLogs?.length) {
+      const byExercise = {};
+      exLogs.forEach(l => {
+        if (!byExercise[l.exercise_name]) byExercise[l.exercise_name] = [];
+        byExercise[l.exercise_name].push(l);
+      });
+      content += Object.entries(byExercise).map(([name, sets]) => `
+        <div style="padding:10px 0;border-bottom:1px solid #F0EDE8">
+          <p style="font-size:12px;font-weight:700;margin-bottom:4px">${name}</p>
+          <p style="font-size:11px;color:#888">${sets.map(s => `Set ${s.set_number}: ${s.reps_completed} reps${s.weight_lbs ? ' · '+s.weight_lbs+'lb' : ''}`).join(' · ')}</p>
+        </div>`).join('');
+    } else if (isPast) {
+      content += `<p style="font-size:12px;color:#888;margin-bottom:12px">Nothing logged for this day.</p>`;
+    }
+    if (isPast && !session?.completed) {
+      content += `
+        <button onclick="backfillStrengthComplete('${dateStr}')"
+          style="width:100%;margin-top:14px;padding:13px;background:#2B6CB0;color:#fff;border:none;border-radius:14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">
+          Mark as completed →
+        </button>`;
+    }
+  } else if (workoutType === 'vo2') {
+    if (session?.completed) {
+      content += `<div style="background:#FCEBEB;border-radius:12px;padding:14px 16px;margin-bottom:14px"><p style="font-size:13px;font-weight:700;color:#C53030">VO₂ Max session completed ✓</p></div>`;
+    } else if (isPast) {
+      content += `
+        <p style="font-size:12px;color:#888;margin-bottom:12px">Nothing logged for this day.</p>
+        <button onclick="backfillVO2Complete('${dateStr}')"
+          style="width:100%;padding:13px;background:#C53030;color:#fff;border:none;border-radius:14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">
+          Mark as completed →
+        </button>`;
+    }
+  } else if (workoutType === 'rest') {
+    content += `<p style="font-size:13px;color:#888">Rest and recovery day.</p>`;
+  }
+
+  content += `</div>`;
+  document.getElementById('sheet-content').innerHTML = content;
+  openSheet();
+};
+
+window.openBackfillZ2 = function (dateStr) {
+  const activities = WORKOUTS.zone2.activities;
+  const durations = [20, 30, 45, 60, 75, 90];
+  document.getElementById('sheet-content').innerHTML = `
+    <div style="padding:0 18px 20px">
+      <p style="font-size:16px;font-weight:800;margin-bottom:4px">Log Zone 2 — ${dateStr.slice(5).replace('-','/')}</p>
+      <p style="font-size:11px;color:#888;margin-bottom:16px">Adding a past session</p>
+      <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#AAA;margin-bottom:8px">Activity</p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px" id="bf-act-grid">
+        ${activities.map(a => `
+          <div onclick="selectBfActivity('${a.id}')" id="bf-act-${a.id}"
+            style="border-radius:12px;padding:8px 4px;text-align:center;cursor:pointer;border:1.5px solid ${a.id==='run'?'#276749':'#E0DDD8'};background:${a.id==='run'?'#EAF3DE':'#F7F5F0'}">
+            <div style="font-size:20px">${a.icon}</div>
+            <div style="font-size:9px;font-weight:700;color:${a.id==='run'?'#276749':'#888'};margin-top:2px">${a.name}</div>
+          </div>`).join('')}
+      </div>
+      <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#AAA;margin-bottom:8px">Duration</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px" id="bf-dur-chips">
+        ${durations.map(d => `
+          <div onclick="selectBfDuration(${d})" id="bf-dur-${d}"
+            style="font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;cursor:pointer;border:1.5px solid ${d===45?'#276749':'#E0DDD8'};background:${d===45?'#EAF3DE':'#F7F5F0'};color:${d===45?'#276749':'#666'}">
+            ${d} min
+          </div>`).join('')}
+      </div>
+      <button onclick="saveBackfillZ2('${dateStr}')" 
+        style="width:100%;padding:14px;background:#276749;color:#fff;border:none;border-radius:14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">
+        Save session →
+      </button>
+    </div>
+  `;
+  openSheet();
+};
+
+let bfSelection = { activityId: 'run', durationMins: 45 };
+
+window.selectBfActivity = function (id) {
+  bfSelection.activityId = id;
+  WORKOUTS.zone2.activities.forEach(a => {
+    const el = document.getElementById(`bf-act-${a.id}`);
+    if (!el) return;
+    const sel = a.id === id;
+    el.style.borderColor = sel ? '#276749' : '#E0DDD8';
+    el.style.background = sel ? '#EAF3DE' : '#F7F5F0';
+    el.querySelector('div:last-child').style.color = sel ? '#276749' : '#888';
+  });
+};
+
+window.selectBfDuration = function (mins) {
+  bfSelection.durationMins = mins;
+  [20,30,45,60,75,90].forEach(d => {
+    const el = document.getElementById(`bf-dur-${d}`);
+    if (!el) return;
+    const sel = d === mins;
+    el.style.borderColor = sel ? '#276749' : '#E0DDD8';
+    el.style.background = sel ? '#EAF3DE' : '#F7F5F0';
+    el.style.color = sel ? '#276749' : '#666';
+  });
+};
+
+window.saveBackfillZ2 = async function (dateStr) {
+  const { data: session } = await sb.from('workout_sessions').upsert({
+    user_id: state.user.id, date: dateStr,
+    workout_type: getWorkoutForDate(dateStr),
+    week_number: getWeekNumber(), phase: getPhase(getWeekNumber()).name.toLowerCase(),
+    completed: true,
+  }, { onConflict: 'user_id,date' }).select().single();
+
+  await sb.from('zone2_logs').upsert({
+    session_id: session.id, user_id: state.user.id, date: dateStr,
+    activity: bfSelection.activityId,
+    duration_minutes: bfSelection.durationMins,
+    source: 'manual',
+  }, { onConflict: 'session_id' });
+
+  closeSheet();
+  renderWeek();
+};
+
+window.backfillVO2Complete = async function (dateStr) {
+  await sb.from('workout_sessions').upsert({
+    user_id: state.user.id, date: dateStr,
+    workout_type: 'vo2', completed: true,
+    week_number: getWeekNumber(), phase: getPhase(getWeekNumber()).name.toLowerCase(),
+  }, { onConflict: 'user_id,date' });
+  closeSheet();
+  renderWeek();
+};
+
+window.backfillStrengthComplete = async function (dateStr) {
+  await sb.from('workout_sessions').upsert({
+    user_id: state.user.id, date: dateStr,
+    workout_type: getWorkoutForDate(dateStr), completed: true,
+    week_number: getWeekNumber(), phase: getPhase(getWeekNumber()).name.toLowerCase(),
+  }, { onConflict: 'user_id,date' });
+  closeSheet();
+  renderWeek();
 };
 
 // ─── PROGRESS VIEW ───────────────────────────────────────────
