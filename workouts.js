@@ -208,7 +208,7 @@ export function getTodayWorkout() {
 
 // Get workout for a specific date
 export function getWorkoutForDate(date) {
-  return SCHEDULE[new Date(date).getDay()];
+  return SCHEDULE[new Date(date + 'T12:00:00').getDay()];
 }
 
 // Get the current week's schedule as an array (Mon–Sun)
