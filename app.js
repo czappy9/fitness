@@ -748,8 +748,8 @@ async function renderProgress() {
     wStart.setDate(now.getDate() - (7 - i) * 7);
     wStart.setDate(wStart.getDate() - wStart.getDay() + 1);
     const wEnd = new Date(wStart); wEnd.setDate(wStart.getDate() + 6);
-    const wStartStr = wStart.toISOString().split('T')[0];
-    const wEndStr = wEnd.toISOString().split('T')[0];
+    const wStartStr = `${wStart.getFullYear()}-${String(wStart.getMonth()+1).padStart(2,'0')}-${String(wStart.getDate()).padStart(2,'0')}`;
+    const wEndStr = `${wEnd.getFullYear()}-${String(wEnd.getMonth()+1).padStart(2,'0')}-${String(wEnd.getDate()).padStart(2,'0')}`;
     const total = (z2Data || []).filter(z => z.date >= wStartStr && z.date <= wEndStr).reduce((sum, z) => sum + z.duration_minutes, 0);
     return { label: `W${i + 1}`, total, hit: total >= 150 };
   });
