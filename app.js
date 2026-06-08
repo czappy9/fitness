@@ -1,6 +1,6 @@
 // app.js — FitDay PWA main application
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { WORKOUTS, getWeekSchedule, getTodayWorkout, getPhase } from './workouts.js';
+import { WORKOUTS, getWeekSchedule, getTodayWorkout, getPhase, getWorkoutForDate } from './workouts.js';
 import { isConnected as hkConnected, getDailyHealthSnapshot, computeRecoveryScore } from './healthkit.js';
 
 // ─── Config ──────────────────────────────────────────────────
