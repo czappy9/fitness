@@ -589,27 +589,44 @@ window.viewDayDetail = async function (dateStr) {
           ${z2 ? 'Edit log' : 'Log this session →'}
         </button>`;
     }
-  } else if (workoutType.startsWith('strength')) {
+} else if (workoutType.startsWith('strength')) {
+    const workout = WORKOUTS[workoutType];
+
     if (exLogs?.length) {
       const byExercise = {};
       exLogs.forEach(l => {
         if (!byExercise[l.exercise_name]) byExercise[l.exercise_name] = [];
         byExercise[l.exercise_name].push(l);
       });
+      content += `<p style="font-size:11px;font-weight:700;color:#AAA;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">What you logged</p>`;
       content += Object.entries(byExercise).map(([name, sets]) => `
         <div style="padding:10px 0;border-bottom:1px solid #F0EDE8">
           <p style="font-size:12px;font-weight:700;margin-bottom:4px">${name}</p>
           <p style="font-size:11px;color:#888">${sets.map(s => `Set ${s.set_number}: ${s.reps_completed} reps${s.weight_lbs ? ' · '+s.weight_lbs+'lb' : ''}`).join(' · ')}</p>
         </div>`).join('');
-    } else if (isPast) {
-      content += `<p style="font-size:12px;color:#888;margin-bottom:12px">Nothing logged for this day.</p>`;
     }
+
+    content += `
+      <p style="font-size:11px;font-weight:700;color:#AAA;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px">
+        ${workout.label} — exercises
+      </p>
+      ${workout.exercises.map(ex => `
+        <div style="padding:9px 0;border-bottom:1px solid #F0EDE8">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <p style="font-size:12px;font-weight:700">${ex.name}</p>
+            <span style="font-size:10px;color:#AAA">${ex.sets} × ${ex.duration ? ex.duration+'s' : ex.repsMin+'–'+ex.repsMax+' reps'}</span>
+          </div>
+          <p style="font-size:10px;color:#888;margin-top:2px">${ex.category} · ${ex.load}</p>
+          <p style="font-size:10px;color:#AAA;margin-top:2px;font-style:italic">${ex.cue}</p>
+        </div>`).join('')}`;
+
     if (isPast && !session?.completed) {
       content += `
         <button onclick="backfillStrengthComplete('${dateStr}')"
           style="width:100%;margin-top:14px;padding:13px;background:#2B6CB0;color:#fff;border:none;border-radius:14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">
           Mark as completed →
         </button>`;
+    }
     }
   } else if (workoutType === 'vo2') {
     if (session?.completed) {
